@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, Response
 from pymongo import MongoClient
 import os
+import time
 
 app = Flask(__name__)
 
@@ -10,10 +11,52 @@ client = MongoClient(mongo_uri)
 db = client["todo_db"]
 tasks_collection = db["tasks"]
 
+# Simple metrics storage
+app_start_time = time.time()
+
 # --- Routes ---
 @app.route("/live")
 def live():
     return "live"
+
+@app.route("/health")
+def health():
+    """Health check endpoint"""
+    try:
+        db.command('ping')
+        return "healthy"
+    except Exception as e:
+        return f"unhealthy: {str(e)}", 500
+
+@app.route("/metrics")
+def metrics():
+    """Basic Prometheus metrics endpoint"""
+    try:
+        task_count = tasks_collection.count_documents({})
+        uptime = time.time() - app_start_time
+        
+        # Check DB connection
+        db.command('ping')
+        db_connected = 1
+    except Exception:
+        task_count = 0
+        uptime = time.time() - app_start_time
+        db_connected = 0
+    
+    metrics_text = f"""# HELP flask_app_tasks_total Total number of tasks
+# TYPE flask_app_tasks_total gauge
+flask_app_tasks_total {task_count}
+
+# HELP flask_app_uptime_seconds Application uptime in seconds
+# TYPE flask_app_uptime_seconds counter
+flask_app_uptime_seconds {uptime:.2f}
+
+# HELP flask_app_database_connected Database connection status
+# TYPE flask_app_database_connected gauge
+flask_app_database_connected {db_connected}
+"""
+    
+    return Response(metrics_text, mimetype='text/plain')
 
 @app.route("/")
 def index():

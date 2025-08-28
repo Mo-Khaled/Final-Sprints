@@ -13,6 +13,10 @@ spec:
   matchNames: ["default"]
  endpoints:
   - port: http
+    path: /metrics
+    interval: 15s
+    scheme: http
+  - port: http
     path: /health
-    interval: 5s
+    interval: 30s
     scheme: http
