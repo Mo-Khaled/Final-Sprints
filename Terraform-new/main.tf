@@ -11,9 +11,9 @@ terraform {
 
   backend "s3" {
     bucket         = "mokhaled-bucket-1286"  # ← CHANGE ME
-    key            = "eks-cluster/terraform.tfstate"
+    key            = "terraform.tfstate"
     region         = "us-west-2"  # ← CHANGE ME
-    dynamodb_table = "terraform-state-lock"         # ← Ensure this exists
+    dynamodb_table = "terraform-lock"         # ← Ensure this exists
     encrypt        = true
   }
 }
