@@ -235,7 +235,7 @@ jobs:
                envsubst < values.yml > /tmp/values.rendered.yml
                echo "Rendered values:"
                tail -n +1 /tmp/values.rendered.yml
-              working-directory: ./kubernetes
+              working-directory: ./k8s
 
             - name: Install/Upgrade kube-prometheus-stack
               run: |
@@ -246,7 +246,7 @@ jobs:
             - name: Apply ServiceMonitor for my app
               run: |
                 kubectl apply -f servicemonitor.yml
-              working-directory: ./kubernetes
+              working-directory: ./k8s
 
             - name: Show external endpoints
               run: |
