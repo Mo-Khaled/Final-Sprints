@@ -124,7 +124,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: us-west-2
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3.1.2
@@ -161,18 +161,18 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: us-west-2
 
       - name: Update kubeconfig
         run: |
-          aws eks --region us-east-1 update-kubeconfig --name sprints-cluster-0
+          aws eks --region us-west-2 update-kubeconfig --name sprints-cluster-0
 
       - name: Trigger App Deployment
         uses: statsig-io/kubectl-via-eksctl@main
         env:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: us-east-1
+          region: us-west-2
           cluster: sprints-cluster-0
 
       - name: Deploy K8s Deployments
