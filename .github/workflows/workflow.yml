@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - Terraform
 
 env:
   MONGO_URI: 'mongodb://mongodb:27017/'

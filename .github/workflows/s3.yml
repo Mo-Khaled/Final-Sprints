@@ -7,6 +7,10 @@ on:
 jobs:
   setup-terraform-backend:
     runs-on: ubuntu-latest
+    env:
+      BUCKET_NAME: mokhaled-bucket-1286
+      DYNAMODB_TABLE: terraform-lock  # ✅ Match your Terraform config
+      AWS_REGION: us-west-2
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -20,20 +24,39 @@ jobs:
 
       - name: Create S3 bucket (if not exists)
         run: |
-          if ! aws s3api head-bucket --bucket mokhaled-bucket-1286 2>/dev/null; then
-            if [ "${AWS_REGION}" = "us-west-2" ]; then
-              aws s3api create-bucket \
-                --bucket mokhaled-bucket-1286 \
-                --region us-west-2
+          if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+            echo "✅ S3 bucket '$BUCKET_NAME' already exists"
+          else
+            echo "📦 Creating S3 bucket '$BUCKET_NAME' in $AWS_REGION"
+
+            # Special case: us-east-1 doesn't accept LocationConstraint
+            if [ "$AWS_REGION" = "us-east-1" ]; then
+              aws s3api create-bucket --bucket "$BUCKET_NAME"
             else
               aws s3api create-bucket \
-                --bucket mokhaled-bucket-1286 \
-                --region ${AWS_REGION} \
-                --create-bucket-configuration LocationConstraint=${AWS_REGION}
+                --bucket "$BUCKET_NAME" \
+                --region "$AWS_REGION" \
+                --create-bucket-configuration LocationConstraint="$AWS_REGION"
             fi
-            echo "S3 bucket mokhaled-bucket-1286 created"
-          else
-            echo "S3 bucket already exists"
+
+            # ✅ Enable versioning and encryption
+            aws s3api put-bucket-versioning \
+              --bucket "$BUCKET_NAME" \
+              --versioning-configuration Status=Enabled
+
+            aws s3api put-bucket-encryption \
+              --bucket "$BUCKET_NAME" \
+              --server-side-encryption-configuration '{
+                "Rules": [
+                  {
+                    "ApplyServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }'
+
+            echo "✅ S3 bucket created with versioning and encryption"
           fi
 
       - name: Create DynamoDB table (if not exists)
