@@ -9,3 +9,4 @@ node_desired_capacity   = 2
 node_min_capacity       = 1
 node_max_capacity       = 3
 public_key_path         = "id_rsa.pub"
+cluster_version = "1.29"
