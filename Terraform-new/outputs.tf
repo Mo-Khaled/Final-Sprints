@@ -1,11 +1,11 @@
 # outputs.tf
 output "cluster_endpoint" {
-  value       = aws_eks_cluster.cluster.endpoint
+  value       = aws_eks_cluster.main.endpoint
   description = "EKS cluster endpoint"
 }
 
 output "cluster_arn" {
-  value       = aws_eks_cluster.cluster.arn
+  value       = aws_eks_cluster.main.arn
   description = "EKS cluster ARN"
 }
 

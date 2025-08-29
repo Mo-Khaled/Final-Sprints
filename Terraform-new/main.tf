@@ -40,7 +40,7 @@ data "aws_availability_zones" "available" {
 }
 
 # Public Subnets (using cidrsubnet)
-resource "aws_subnet" "private-subnet" {
+resource "aws_subnet" "private" {
   count             = length(var.private-subnets)
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private-subnets[count.index]
@@ -53,7 +53,7 @@ resource "aws_subnet" "private-subnet" {
   }
 }
 
-resource "aws_subnet" "public-subnet" {
+resource "aws_subnet" "public" {
   count             = length(var.public-subnets)
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.public-subnets[count.index]
@@ -61,9 +61,9 @@ resource "aws_subnet" "public-subnet" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name                                      = "${var.project}-${var.environment}-public-subnet-${var.azs[count.index]}"
+    Name                                    = "${var.project}-${var.environment}-public-subnet-${var.azs[count.index]}"
     "Kubernetes.io/role/elb"                = "1"
-   "Kubernetes.io/cluster/sprints-cluster" = "owned"
+   "Kubernetes.io/cluster/sprints-cluster"  = "owned"
   }
 }
 
@@ -80,7 +80,7 @@ resource "aws_eip" "eip" {
 resource "aws_nat_gateway" "nat" {
 
   allocation_id = aws_eip.eip.id
-  subnet_id     = aws_subnet.public-subnet[0].id
+  subnet_id     = aws_subnet.public[0].id
 
   tags = {
     Name = "${var.project}-${var.environment}_nat"
@@ -116,7 +116,7 @@ resource "aws_route_table" "sprints_rt_public" {
 # Associate public subnets with public route table
 resource "aws_route_table_association" "public_subnet_ta" {
   count          = length(var.public-subnets)
-  subnet_id      = aws_subnet.public-subnet[count.index].id
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.sprints_rt_public.id
 }
 
@@ -138,7 +138,7 @@ resource "aws_route_table" "sprints_rt_private" {
 # Associate private subnets with private route table
 resource "aws_route_table_association" "private_subnet_ta" {
   count          = length(var.private-subnets)
-  subnet_id      = aws_subnet.private-subnet[count.index].id
+  subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.sprints_rt_private.id
 }
 
