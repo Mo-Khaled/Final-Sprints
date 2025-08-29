@@ -160,7 +160,7 @@ This creates:
 - Node groups with auto-scaling
 - Security groups and IAM roles
 
-## 🚀 Deployment
+## 🚀Deployment
 
 ### Kubernetes Deployment
 
