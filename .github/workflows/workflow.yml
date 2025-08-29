@@ -189,7 +189,7 @@ jobs:
           kubectl get svc
   deploy-monitoring:
         needs: deploy
-        name: deploy to EKS
+        name: moitoring
         runs-on: ubuntu-latest
         env: 
           AWS_REGION: us-west-2
