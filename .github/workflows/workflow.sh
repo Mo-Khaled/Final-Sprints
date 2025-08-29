@@ -188,74 +188,86 @@ jobs:
           kubectl get pods
           kubectl get svc
   deploy-monitoring:
-        needs: deploy
-        name: monitoring
-        runs-on: ubuntu-latest
-        env: 
-          AWS_REGION: us-west-2
-          EKS_CLUSTER_NAME: stage-eks-cluster
-          GRAFANA_ADMIN_PASSWORD: ${{ secrets.grafana_admin_password }}
+    needs: deploy
+    name: monitoring
+    runs-on: ubuntu-latest
+    env: 
+      AWS_REGION: us-west-2
+      EKS_CLUSTER_NAME: stage-eks-cluster
+      GRAFANA_ADMIN_PASSWORD: ${{ secrets.grafana_admin_password }}
 
-        steps:
-            - name: checkout config files
-              uses: actions/checkout@v5
+    steps:
+      - name: Checkout config files
+        uses: actions/checkout@v5
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4.3.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
 
-            - name: Configure AWS Credentials
-              uses: aws-actions/configure-aws-credentials@v4.3.1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  aws-region: us-west-2
+      - name: Update kubeconfig
+        run: | 
+          aws eks --region us-west-2 update-kubeconfig --name stage-eks-cluster
 
-            - name: update kubeconfig
-              run: | 
-                    aws eks --region us-west-2 update-kubeconfig --name stage-eks-cluster
+      - name: Trigger app deployment
+        uses: statsig-io/kubectl-via-eksctl@main
+        env:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: us-west-2
+          cluster: stage-eks-cluster
 
-            - name: Trigger app deployment
-              uses: statsig-io/kubectl-via-eksctl@main
-              env:
-                 aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                 aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                 region: us-west-2
-                 cluster: stage-eks-cluster
+      - name: Create monitoring namespace
+        run: kubectl create namespace monitoring || true
 
-            - name: Output monitoring namespace YAML
-              run: kubectl create namespace monitoring --dry-run=client -o yaml
-            - name: Create monitoring namespace
-              run: kubectl create namespace monitoring || true
+      - name: Add Helm repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
 
-            - name: Add Helm repos
-              run: |
-                helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-                helm repo add grafana https://grafana.github.io/helm-charts
-                helm repo update
-            - name: Render values with env
-              run: |
-               envsubst < values.yml > /tmp/values.rendered.yml
-               echo "Rendered values:"
-               tail -n +1 /tmp/values.rendered.yml
-              working-directory: ./k8s
+      # Install CRDs for ServiceMonitor/PodMonitor support
+      - name: Install Prometheus Operator CRDs
+        run: |
+          kubectl apply --server-side -f https://github.com/prometheus-operator/prometheus-operator/releases/latest/download/bundle.yaml
 
-            - name: Install/Upgrade kube-prometheus-stack
-              run: |
-                helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
-                  --namespace monitoring \
-                  --values /tmp/values.rendered.yml \
-                  --wait --timeout 15m
-            - name: Apply ServiceMonitor for my app
-              run: |
-                kubectl apply -f servicemonitor.yml
-              working-directory: ./k8s
+      - name: Render values with env
+        run: |
+          envsubst < values.yml > /tmp/values.rendered.yml
+          echo "Rendered values:"
+          tail -n +1 /tmp/values.rendered.yml
+        working-directory: ./k8s
 
-            - name: Show external endpoints
-              run: |
-                echo "Waiting for LoadBalancer IPs..."
-                kubectl -n monitoring wait --for=condition=available deploy/kube-prometheus-stack-grafana --timeout=10m
-                kubectl -n monitoring get svc -o wide
-                echo "Grafana URL:"
-                kubectl -n monitoring get svc kube-prometheus-stack-grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}{.status.loadBalancer.ingress[0].ip}{"\n"}'
-                echo "Prometheus URL:"
-                kubectl -n monitoring get svc kube-prometheus-stack-prometheus -o jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}{.status.loadBalancer.ingress[0].ip}{"\n"}'
+      - name: Install/Upgrade Prometheus
+        run: |
+          helm upgrade --install prometheus prometheus-community/prometheus \
+            --namespace monitoring \
+            --values /tmp/values.rendered.yml \
+            --wait --timeout 5m
+
+      - name: Install/Upgrade Grafana
+        run: |
+          helm upgrade --install grafana grafana/grafana \
+            --namespace monitoring \
+            --set adminPassword=$GRAFANA_ADMIN_PASSWORD \
+            --set service.type=LoadBalancer \
+            --wait --timeout 5m
+
+      - name: Apply ServiceMonitor for my app
+        run: |
+          kubectl apply -f servicemonitor.yml
+        working-directory: ./k8s
+
+      - name: Show external endpoints
+        run: |
+          echo "Waiting for LoadBalancer IPs..."
+          kubectl -n monitoring wait --for=condition=available deploy/grafana --timeout=5m
+          kubectl -n monitoring get svc -o wide
+          echo "Grafana URL:"
+          kubectl -n monitoring get svc grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}{.status.loadBalancer.ingress[0].ip}{"\n"}'
+          echo "Prometheus URL:"
+          kubectl -n monitoring get svc prometheus-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}{.status.loadBalancer.ingress[0].ip}{"\n"}'
 
                     
