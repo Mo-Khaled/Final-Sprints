@@ -206,18 +206,18 @@ jobs:
               with:
                   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
+                  aws-region: us-west-2
 
             - name: update kubeconfig
               run: | 
-                    aws eks --region us-east-1 update-kubeconfig --name sprints-cluster-0
+                    aws eks --region us-west-2 update-kubeconfig --name sprints-cluster-0
 
             - name: Trigger app deployment
               uses: statsig-io/kubectl-via-eksctl@main
               env:
                  aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                  aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                 region: us-east-1
+                 region: us-west-2
                  cluster: sprints-cluster-0
 
             - name: Output monitoring namespace YAML
