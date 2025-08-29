@@ -81,16 +81,6 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# Key Pair for EC2 instances (if needed for troubleshooting)
-resource "aws_key_pair" "main" {
-  key_name   = "${var.cluster_name}-key"
-  public_key = file(var.public_key_path)
-
-  tags = {
-    Name = "${var.cluster_name}-key"
-  }
-}
-
 # Security Groups: Allow inbound traffic on ports 5000 (application), 22 (SSH), and 443 (HTTPS)
 resource "aws_security_group" "eks_cluster" {
   name        = "${var.cluster_name}-cluster-sg"
@@ -314,12 +304,6 @@ resource "aws_eks_node_group" "main" {
 
   update_config {
     max_unavailable = 1
-  }
-
-  # SSH access configuration using the key pair
-  remote_access {
-    ec2_ssh_key = aws_key_pair.main.key_name
-    source_security_group_ids = [aws_security_group.eks_nodes.id]
   }
 
   depends_on = [

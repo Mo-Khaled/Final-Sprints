@@ -10,12 +10,6 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
-variable "public_key_path" {
-  description = "Path to the public key file"
-  type        = string
-  default     = "id_rsa.pub"
-}
-
 variable "cluster_name" {
   description = "Name of the EKS cluster"
   type        = string

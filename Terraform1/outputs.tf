@@ -20,12 +20,6 @@ output "public_subnet_cidrs" {
   value       = aws_subnet.public[*].cidr_block
 }
 
-# Key Pair Output
-output "key_pair_name" {
-  description = "Name of the created key pair"
-  value       = aws_key_pair.main.key_name
-}
-
 # Internet Gateway Output
 output "internet_gateway_id" {
   description = "ID of the Internet Gateway"
