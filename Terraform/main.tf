@@ -8,7 +8,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "mokhaled-bucket-1286"
+    bucket         = "mokhaled-bucket-1287"
     key            = "terraform.tfstate"
     region         = "us-west-2"
     dynamodb_table = "terraform-lock"

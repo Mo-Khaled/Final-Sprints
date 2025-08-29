@@ -16,22 +16,22 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: us-west-2
 
       - name: Create S3 bucket (if not exists)
         run: |
-          if ! aws s3api head-bucket --bucket mokhaled-bucket-1286 2>/dev/null; then
-            if [ "${AWS_REGION}" = "us-east-1" ]; then
+          if ! aws s3api head-bucket --bucket mokhaled-bucket-1287 2>/dev/null; then
+            if [ "${AWS_REGION}" = "us-west-2" ]; then
               aws s3api create-bucket \
-                --bucket mokhaled-bucket-1286 \
-                --region us-east-1
+                --bucket mokhaled-bucket-1287 \
+                --region us-west-2
             else
               aws s3api create-bucket \
-                --bucket mokhaled-bucket-1286 \
+                --bucket mokhaled-bucket-1287 \
                 --region ${AWS_REGION} \
                 --create-bucket-configuration LocationConstraint=${AWS_REGION}
             fi
-            echo "S3 bucket mokhaled-bucket-1286 created"
+            echo "S3 bucket mokhaled-bucket-1287 created"
           else
             echo "S3 bucket already exists"
           fi
