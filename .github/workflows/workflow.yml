@@ -250,6 +250,7 @@ jobs:
                   --namespace monitoring \
                   --values /tmp/values.rendered.yml \
                   --wait --timeout 15m
+
             - name: Apply ServiceMonitor for my app
               run: |
                 kubectl apply -f servicemonitor.yml
