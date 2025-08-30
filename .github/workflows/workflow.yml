@@ -236,7 +236,14 @@ jobs:
                echo "Rendered values:"
                tail -n +1 /tmp/values.rendered.yml
               working-directory: ./k8s
-
+            - name: Cleanup stuck Helm releases
+              run: |
+                  if helm status kube-prometheus-stack -n monitoring | grep -q "pending"; then
+                    echo "Cleaning up stuck release..."
+                    helm uninstall kube-prometheus-stack -n monitoring || true
+                  fi
+              working-directory: ./k8s
+              
             - name: Install/Upgrade kube-prometheus-stack
               run: |
                 helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
