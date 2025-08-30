@@ -4,16 +4,16 @@ metadata:
   name: flask-microservice
   namespace: monitoring
   labels:
-    release: kube-prometheus-stack   # must match your Prometheus release
+    release: kube-prometheus-stack   
 spec:
   selector:
     matchLabels:
-      app: flask-microservice        # must match your Service's label
+      app: flask-microservice       
   namespaceSelector:
     matchNames:
-      - default                      # where your app Service lives
+      - default                     
   endpoints:
-    - port: http                     # must match the name of the port in your Service
+    - port: http                     
       path: /metrics
       interval: 15s
       scheme: http
