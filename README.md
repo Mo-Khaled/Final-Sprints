@@ -2,6 +2,8 @@
 
 A modern Flask-based Todo application featuring a complete CI/CD pipeline with containerization, Kubernetes deployment, Infrastructure as Code (Terraform), and comprehensive monitoring stack.
 ![App Screenshot](images/README.png)
+![App Screenshot](images/Diagram.png)
+
 
 
 ## 🚀 Features
