@@ -1,5 +1,5 @@
 grafana:
- adminPassword: "${grafana_admin_password}"
+ adminPassword: "${GRAFANA_ADMIN_PASSWORD}" 
  service:
   type: LoadBalancer
  persistence:

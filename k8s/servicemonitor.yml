@@ -8,7 +8,8 @@ metadata:
 spec:
  selector:
   matchLabels:
-   app: microservice
+   app: flask-microservice
+   release: kube-prometheus-stack
  namespaceSelector:
   matchNames: ["default"]
  endpoints:
